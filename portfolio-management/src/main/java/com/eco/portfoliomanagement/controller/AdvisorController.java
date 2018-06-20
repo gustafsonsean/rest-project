@@ -30,7 +30,7 @@ import java.util.List;
 public class AdvisorController {
     private static final Logger log = LoggerFactory.getLogger(AdvisorController.class);
 
-    SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");//dd/MM/yyyy
+    SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd");
 
     @Autowired
     AdvisorService advisorService;
@@ -40,6 +40,7 @@ public class AdvisorController {
 
     @RequestMapping(value = "/advisor/{advisorId}/model", method = RequestMethod.GET)
     public ResponseEntity<?> getAllModelsForAdvisorId( @PathVariable("advisorId") String advisorId , @RequestParam(value = "pageSize", required = false) Integer pageSize, @RequestParam(value = "pageNumber", required = false) Integer pageNumber) {
+        log.info("Advisor PortfolioModel called for " + advisorId);
         Advisor advisor = advisorService.findByAdvisorId(advisorId);
         if (pageNumber == null)
         {
@@ -49,11 +50,19 @@ public class AdvisorController {
         {
             pageSize = 10;
         }
-        if (advisor == null)
+        if (advisor == null) {
+            log.info("Advisor Not Found");
             return new ResponseEntity(new CustomErrorType("advisor.not.found"), HttpStatus.NOT_FOUND);
+        }
         //
 
         Page<PortfolioModel> portfolioModelPaged = portfolioModelService.findByAdvisorPaged(advisor, pageNumber, pageSize);
+
+        if (portfolioModelPaged == null)
+        {
+            log.debug("Portfolio Model Service is null " );
+            return new ResponseEntity(new CustomErrorType("unable.to.complete.requested.action"), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         List<PortfolioModel> portfolioModelList = portfolioModelPaged.getContent();
         AdvisorModelWebList advisorModelWebList = new AdvisorModelWebList();
@@ -109,14 +118,16 @@ public class AdvisorController {
 
     @RequestMapping(value = "/advisor/{advisorId}/model", method = RequestMethod.PUT)
     public ResponseEntity<?> updateModelForAdvisorId( @PathVariable("advisorId") String advisorId, @RequestBody PortfolioModelWeb portfolioModelWeb ) {
-
+        log.info("Update PortfolioModel called for " + advisorId);
         Advisor advisor = advisorService.findByAdvisorId(advisorId);
-        if (advisor == null)
+        if (advisor == null) {
+            log.debug("Advisor Not Found");
             return new ResponseEntity(new CustomErrorType("advisor.not.found"), HttpStatus.NOT_FOUND);
-
-        if (portfolioModelWeb == null)
+        }
+        if (portfolioModelWeb == null) {
+            log.debug("No request body found");
             return new ResponseEntity(new CustomErrorType("advisor.data.missing"), HttpStatus.BAD_REQUEST);
-
+        }
         Double total = 0.0;
         for (AssetAllocation assetAllocation : portfolioModelWeb.getAssetAllocations())
         {
@@ -210,10 +221,10 @@ public class AdvisorController {
 
     }
 
-    // Method to programmatically create a new advisor.
+    // Method to programmatically create a new advisor. No post body at this time since advisor has no properties.
     @RequestMapping(value = "/advisor", method = RequestMethod.POST)
     public ResponseEntity<?> createAdvisor(UriComponentsBuilder ucBuilder ) {
-
+        log.debug("Creating new advisor");
         Advisor advisor = new Advisor();
         advisor.setAdvisorId(java.util.UUID.randomUUID().toString());
         advisorService.saveAdvisor(advisor);

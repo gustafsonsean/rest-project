@@ -9,6 +9,8 @@ management:
   security:
     enabled: false
 
+logging:
+  file: pm.log
 #Edit datasource URL to point to mysql database.
 datasource:
   portfolioApp:
@@ -19,7 +21,7 @@ datasource:
     defaultSchema: portfolio
     maxPoolSize: 20
     hibernate:
-      hbm2ddl.method: create-drop
+      hbm2ddl.method: create
       #hbm2ddl.method: none
       show_sql: false
       format_sql: true
